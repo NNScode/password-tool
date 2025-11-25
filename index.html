@@ -1,89 +1,113 @@
 <!DOCTYPE html>
 <html lang="en">
-  <head>
+<head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Mật khẩu an toàn</title>
     <link rel="stylesheet" href="style.css" />
     <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css?family=Roboto"
+            rel="stylesheet"
+            href="https://fonts.googleapis.com/css?family=Roboto"
     />
     <link
-      rel="stylesheet"
-      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
+            rel="stylesheet"
+            href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css"
     />
-  </head>
+</head>
 
-  <body>
-    <div class="container-wrapper">
-      <div class="left-column">
+<body>
+<div class="container-wrapper">
+    <div class="left-column">
         <div class="container checker-container">
-          <h2 class="title">Kiểm tra độ mạnh</h2>
-          <div class="input">
-            <input
-              type="text"
-              id="passwordInput"
-              placeholder="Nhập mật khẩu để kiểm tra..."
-            />
-            <button id="togglePasswordBtn">
-              <i class="fa-solid fa-eye"></i>
-            </button>
-            <div class="input__title field-title">nhập mật khẩu:</div>
-          </div>
-          <div class="strength-meter">
-            <progress id="strengthMeter" value="0" max="100"></progress>
-          </div>
-          <div class="suggestions">
-            <ul id="strengthSuggestions"></ul>
-          </div>
+            <h2 class="title">Kiểm tra độ mạnh</h2>
+            <div class="input">
+                <input
+                        type="text"
+                        id="passwordInput"
+                        placeholder="Nhập mật khẩu để kiểm tra..."
+                />
+                <button id="togglePasswordBtn">
+                    <i class="fa-solid fa-eye"></i>
+                </button>
+                <div class="input__title field-title">nhập mật khẩu:</div>
+            </div>
+            <div class="strength-meter">
+                <progress id="strengthMeter" value="0" max="100"></progress>
+            </div>
+            <div class="suggestions">
+                <ul id="strengthSuggestions"></ul>
+            </div>
         </div>
         <div class="logo-area">
-          <img src="soict.png" alt="Trường CNTT & TT" id="soict-logo" />
+            <img src="soict.png" alt="Trường CNTT & TT" id="soict-logo" />
         </div>
-      </div>
+    </div>
 
-      <div class="container generator-container">
+    <div class="container generator-container">
         <h2 class="title">Sinh mật khẩu</h2>
         <div class="result">
-          <div class="result__title field-title">sinh mật khẩu:</div>
-          <div class="result__info right">Nhấp chuột để sao chép</div>
-          <div class="result__info left">Đã sao chép</div>
-          <div class="result__viewbox" id="result">
-            Nhấn nút "Sinh mật khẩu"
-          </div>
-          <button id="copy-btn" style="--x: 0; --y: 0">
-            <i class="fa-solid fa-copy" style="color: #0a0e30;"></i>
-          </button>
+            <div class="result__title field-title">sinh mật khẩu:</div>
+            <div class="result__info right">Nhấp chuột để sao chép</div>
+            <div class="result__info left">Đã sao chép</div>
+            <div class="result__viewbox" id="result">CLICK GENERATE</div>
+            <button id="copy-btn" style="--x: 0; --y: 0">
+                <i class="fa-solid fa-copy" style="color: #0a0e30;"></i>
+            </button>
         </div>
+
         <div class="length range__slider" data-min="4" data-max="32">
-          <div class="length__title field-title" data-length="0">số ký tự:</div>
-          <input id="slider" type="range" min="4" max="32" value="16" />
+            <div class="length__title field-title" data-length="16">số ký tự:</div>
+            <input id="slider" type="range" min="4" max="32" value="16" />
         </div>
 
         <div class="settings">
-          <div class="setting">
-            <input type="checkbox" id="uppercase" checked />
-            <label for="uppercase">Bao gồm chữ hoa</label>
-          </div>
-          <div class="setting">
-            <input type="checkbox" id="lowercase" checked />
-            <label for="lowercase">Bao gồm chữ thường</label>
-          </div>
-          <div class="setting">
-            <input type="checkbox" id="number" checked />
-            <label for="number">Bao gồm số</label>
-          </div>
-          <div class="setting">
-            <input type="checkbox" id="symbol" />
-            <label for="symbol">Bao gồm ký tự đặc biệt</label>
-          </div>
+            <div class="setting">
+                <input type="checkbox" id="uppercase" checked />
+                <label for="uppercase">Bao gồm chữ hoa</label>
+            </div>
+            <div class="setting">
+                <input type="checkbox" id="lowercase" checked />
+                <label for="lowercase">Bao gồm chữ thường</label>
+            </div>
+            <div class="setting">
+                <input type="checkbox" id="number" checked />
+                <label for="number">Bao gồm số</label>
+            </div>
+            <div class="setting">
+                <input type="checkbox" id="symbol" />
+                <label for="symbol">Bao gồm ký tự đặc biệt</label>
+            </div>
         </div>
 
         <button class="btn generate" id="generate">Sinh mật khẩu</button>
-      </div>
-    </div>
 
-    <script src="script.js"></script>
-  </body>
+        <div style="margin-top: 20px; border-top: 1px dashed rgba(255,255,255,0.2); padding-top: 15px;">
+            <div class="input" style="margin-bottom: 0;">
+                <input
+                        type="text"
+                        id="passphraseInput"
+                        placeholder="VD: Tôi đi học 2024"
+                        style="padding-right: 80px;"
+                />
+                <button id="generateAcronym" style="
+                    position: absolute;
+                    right: 8px;
+                    top: 8px;
+                    bottom: 8px;
+                    background: #209cff;
+                    color: white;
+                    border-radius: 5px;
+                    padding: 0 15px;
+                    font-weight: bold;
+                    font-size: 13px;">
+                    TẠO
+                </button>
+                <div class="input__title field-title" style="top: -10px;">Hoặc từ câu nói:</div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="script.js"></script>
+</body>
 </html>

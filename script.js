@@ -4,315 +4,317 @@
 
 console.clear();
 
-// --- Các phần tử DOM cho "Kiểm tra độ mạnh" ---
+// --- DOM cho Kiểm tra độ mạnh ---
 const togglePasswordBtn = document.getElementById("togglePasswordBtn");
 const passwordInput = document.getElementById("passwordInput");
 const eyeIcon = togglePasswordBtn.querySelector("i");
-const strengthBarFill = document.getElementById("strengthBarFill");
-const strengthFeedback = document.getElementById("strengthFeedback");
+const strengthMeter = document.getElementById("strengthMeter");
 const strengthSuggestions = document.getElementById("strengthSuggestions");
 
-// --- Các phần tử DOM cho "Sinh mật khẩu" ---
+// --- DOM cho Sinh mật khẩu ---
 const resultEl = document.getElementById("result");
 const lengthEl = document.getElementById("slider");
+const lengthValueEl = document.getElementById("length-val"); // Đã sửa lại ID cho khớp với HTML mới
+
 const uppercaseEl = document.getElementById("uppercase");
 const lowercaseEl = document.getElementById("lowercase");
 const numberEl = document.getElementById("number");
 const symbolEl = document.getElementById("symbol");
+
 const generateBtn = document.getElementById("generate");
 const copyBtn = document.getElementById("copy-btn");
-const slider = document.querySelector(".range__slider");
-const sliderValue = document.querySelector(".length__title");
-const resultContainer = document.querySelector(".result");
-const copyInfo = document.querySelector(".result__info.right");
-const copiedInfo = document.querySelector(".result__info.left");
+const copyInfo = document.querySelector(".result__info.right"); // Sửa lại selector cho khớp
+const copiedInfo = document.querySelector(".result__info.left"); // Sửa lại selector cho khớp
+const resultContainer = document.querySelector(".result"); // Sửa lại class cho khớp
 
-// --- Các biến trạng thái & cài đặt ---
+// --- DOM cho Acronym ---
+const passphraseInput = document.getElementById("passphraseInput");
+const generateAcronymBtn = document.getElementById("generateAcronym");
 
-// Cài đặt màu cho thanh slider
+// --- [QUAN TRỌNG] Biến trạng thái (Đã thêm mới để sửa lỗi) ---
 const sliderProps = {
-  fill: "#209cff",
-  background: "rgba(255, 255, 255, 0.214)",
+    fill: "#3b82f6",
+    background: "#334155",
 };
 
-// Biến kiểm tra mật khẩu đã được sinh hay chưa (để copy)
+// Biến theo dõi trạng thái để nút copy hoạt động
 let generatedPassword = false;
 
-// Tọa độ của box kết quả
+// Biến lưu tọa độ khung kết quả để tính toán vị trí chuột
 let resultContainerBound = {
-  left: resultContainer.getBoundingClientRect().left,
-  top: resultContainer.getBoundingClientRect().top,
+    left: resultContainer.getBoundingClientRect().left,
+    top: resultContainer.getBoundingClientRect().top,
 };
 
-// Các hàm tạo ký tự ngẫu nhiên
 const randomFunc = {
-  lower: getRandomLower,
-  upper: getRandomUpper,
-  number: getRandomNumber,
-  symbol: getRandomSymbol,
+    lower: getRandomLower,
+    upper: getRandomUpper,
+    number: getRandomNumber,
+    symbol: getRandomSymbol,
 };
 
 /* ===============================
-   2. GÁN CÁC BỘ LẮNG NGHE SỰ KIỆN
+   2. XỬ LÝ SỰ KIỆN (EVENT LISTENERS)
    =============================== */
 
-// --- Sự kiện cho "Kiểm tra độ mạnh" ---
-
-// Click nút "Ẩn/Hiện mật khẩu"
+// 1. Toggle Ẩn/Hiện mật khẩu
 togglePasswordBtn.addEventListener("click", () => {
-  const isPassword = passwordInput.type === "password";
-  passwordInput.type = isPassword ? "text" : "password";
+    const isPassword = passwordInput.type === "password";
+    passwordInput.type = isPassword ? "text" : "password";
 
-  eyeIcon.classList.toggle("fa-eye", isPassword);
-  eyeIcon.classList.toggle("fa-eye-slash", !isPassword);
+    eyeIcon.classList.toggle("fa-eye", isPassword);
+    eyeIcon.classList.toggle("fa-eye-slash", !isPassword);
 });
 
-// Gõ phím trên ô nhập mật khẩu
+// 2. Nhập liệu để kiểm tra độ mạnh
 passwordInput.addEventListener("input", () => {
-  const password = passwordInput.value;
-  const analysis = analyzePasswordStrength(password);
-  updateStrengthUI(analysis);
+    const password = passwordInput.value;
+    const analysis = analyzePasswordStrength(password);
+    updateStrengthUI(analysis);
 });
 
-// --- Sự kiện cho "Sinh mật khẩu" ---
-
-// Kéo thanh slider
-slider.querySelector("input").addEventListener("input", (event) => {
-  sliderValue.setAttribute("data-length", event.target.value);
-  applyFill(event.target);
+// 3. Slider thay đổi giá trị
+lengthEl.addEventListener("input", (event) => {
+    // Cập nhật số hiển thị
+    if(lengthValueEl) lengthValueEl.innerText = event.target.value;
+    applySliderFill(event.target);
 });
 
-// Click nút "Sinh mật khẩu"
+// 4. Click nút Sinh Mật Khẩu (Random)
 generateBtn.addEventListener("click", () => {
-  const length = +lengthEl.value;
-  const hasLower = lowercaseEl.checked;
-  const hasUpper = uppercaseEl.checked;
-  const hasNumber = numberEl.checked;
-  const hasSymbol = symbolEl.checked;
+    const length = +lengthEl.value;
+    const hasLower = lowercaseEl.checked;
+    const hasUpper = uppercaseEl.checked;
+    const hasNumber = numberEl.checked;
+    const hasSymbol = symbolEl.checked;
 
-  generatedPassword = true;
-  resultEl.innerText = generatePassword(
-    length,
-    hasLower,
-    hasUpper,
-    hasNumber,
-    hasSymbol
-  );
+    const password = generatePassword(length, hasLower, hasUpper, hasNumber, hasSymbol);
 
-  // Hiển thị thông báo "Nhấp chuột để sao chép"
-  copyInfo.style.transform = "translateY(0%)";
-  copyInfo.style.opacity = "0.75";
-  copiedInfo.style.transform = "translateY(200%)";
-  copiedInfo.style.opacity = "0";
+    // Đánh dấu là đã có mật khẩu để nút copy hiện lên
+    generatedPassword = true;
+    displayResult(password);
+    resetCopyText(); // Reset chữ "Đã sao chép" về "Nhấp chuột..."
 });
 
-// Click các checkbox (không cho tắt cái cuối cùng)
-[uppercaseEl, lowercaseEl, numberEl, symbolEl].forEach((el) => {
-  el.addEventListener("click", () => {
-    disableOnlyCheckbox();
-  });
+// 5. Click nút Tạo Acronym (Từ câu nói)
+generateAcronymBtn.addEventListener("click", () => {
+    const sentence = passphraseInput.value.trim();
+    if (!sentence) {
+        alert("Vui lòng nhập một câu!");
+        return;
+    }
+    const password = createAcronymFromSentence(sentence);
+
+    // Đánh dấu là đã có mật khẩu
+    generatedPassword = true;
+    displayResult(password);
+    resetCopyText();
 });
 
-// Di chuột trên box kết quả (nút copy)
+// 6. Logic Nút Copy Bám Theo Chuột
+// Cập nhật tọa độ khi resize màn hình
+window.addEventListener("resize", (e) => {
+    resultContainerBound = {
+        left: resultContainer.getBoundingClientRect().left,
+        top: resultContainer.getBoundingClientRect().top,
+    };
+});
+
+// Di chuột trên box kết quả
 resultContainer.addEventListener("mousemove", (e) => {
-  if (generatedPassword) {
-    copyBtn.style.opacity = "1";
-    copyBtn.style.pointerEvents = "all";
-    copyBtn.style.setProperty("--x", `${e.x - resultContainerBound.left}px`);
-    copyBtn.style.setProperty("--y", `${e.y - resultContainerBound.top}px`);
-  } else {
-    copyBtn.style.opacity = "0";
-    copyBtn.style.pointerEvents = "none";
-  }
+    // Cập nhật lại bound đề phòng scroll
+    resultContainerBound = {
+        left: resultContainer.getBoundingClientRect().left,
+        top: resultContainer.getBoundingClientRect().top,
+    };
+
+    if (generatedPassword) {
+        copyBtn.style.opacity = "1";
+        copyBtn.style.pointerEvents = "all";
+        // Tính toán vị trí chuột tương đối trong khung
+        copyBtn.style.setProperty("--x", `${e.clientX - resultContainerBound.left}px`);
+        copyBtn.style.setProperty("--y", `${e.clientY - resultContainerBound.top}px`);
+    } else {
+        copyBtn.style.opacity = "0";
+        copyBtn.style.pointerEvents = "none";
+    }
 });
 
 // Click nút "Copy"
 copyBtn.addEventListener("click", () => {
-  const textarea = document.createElement("textarea");
-  const password = resultEl.innerText;
+    const password = resultEl.innerText;
 
-  if (!password || password == "CLICK GENERATE") {
-    return;
-  }
+    if (!password || password == "CLICK GENERATE") {
+        return;
+    }
 
-  textarea.value = password;
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  textarea.remove();
+    // Sử dụng Clipboard API hiện đại thay vì execCommand cũ
+    navigator.clipboard.writeText(password).then(() => {
+        // Hiệu ứng text sau khi copy
+        copyInfo.style.opacity = "0";
+        copyInfo.style.transform = "translateY(-20px)";
 
-  // Hiển thị thông báo "Đã sao chép"
-  copyInfo.style.transform = "translateY(200%)";
-  copyInfo.style.opacity = "0";
-  copiedInfo.style.transform = "translateY(0%)";
-  copiedInfo.style.opacity = "0.75";
+        copiedInfo.style.opacity = "1";
+        copiedInfo.style.transform = "translateY(0)";
+
+        // Đổi màu nút xanh báo hiệu
+        copyBtn.style.background = "#2ecc71";
+        copyBtn.style.color = "white";
+
+        // Reset sau 2 giây
+        setTimeout(() => {
+            resetCopyText();
+            copyBtn.style.background = "white";
+            copyBtn.style.color = "#0a0e30";
+        }, 2000);
+    });
 });
 
-// Resize cửa sổ (để cập nhật tọa độ box)
-window.addEventListener("resize", (e) => {
-  resultContainerBound = {
-    left: resultContainer.getBoundingClientRect().left,
-    top: resultContainer.getBoundingClientRect().top,
-  };
+// Ngăn người dùng bỏ chọn tất cả checkbox
+[uppercaseEl, lowercaseEl, numberEl, symbolEl].forEach(el => {
+    el.addEventListener('click', () => {
+        const checkedCount = [uppercaseEl, lowercaseEl, numberEl, symbolEl].filter(x => x.checked).length;
+        if (checkedCount === 0) {
+            el.checked = true; // Bắt buộc giữ lại 1 cái
+        }
+    });
 });
 
 /* ======================
-   3. CÁC HÀM XỬ LÝ LOGIC
+   3. CÁC HÀM LOGIC
    ====================== */
 
-// --- Các hàm cho "Kiểm tra độ mạnh" ---
+// Helper reset text copy
+function resetCopyText() {
+    copyInfo.style.opacity = "1";
+    copyInfo.style.transform = "translateY(0)";
+    copiedInfo.style.opacity = "0";
+    copiedInfo.style.transform = "translateY(20px)";
+}
 
-/**
- * Hàm phân tích mật khẩu và trả về điểm/gợi ý.
- */
+// Hiển thị kết quả ra màn hình
+function displayResult(password) {
+    resultEl.innerText = password;
+}
+
+// Logic Slider Fill màu
+function applySliderFill(slider) {
+    const percentage = (100 * (slider.value - slider.min)) / (slider.max - slider.min);
+    const bg = `linear-gradient(90deg, ${sliderProps.fill} ${percentage}%, ${sliderProps.background} ${percentage + 0.1}%)`;
+    slider.style.background = bg;
+}
+
+// --- LOGIC KIỂM TRA ĐỘ MẠNH ---
 function analyzePasswordStrength(password) {
-  let score = 0;
-  const suggestions = [];
+    let score = 0;
+    const suggestions = [];
 
-  // Nếu không nhập gì, reset
-  if (password.length === 0) {
-    return { score: 0, suggestions: [] };
-  }
+    if (password.length === 0) return { score: 0, suggestions: [] };
 
-  // 1. Tiêu chí độ dài
-  if (password.length < 8) {
-    suggestions.push('<li><i class="fa-solid fa-square-xmark icon-invalid"></i> Phải có ít nhất 8 ký tự</li>');
-  } else if (password.length >= 12) {
-    score += 25;
-    suggestions.push('<li><i class="fa-solid fa-square-check icon-valid"></i> Độ dài rất tốt</li>');
-  } else {
-    score += 10;
-    suggestions.push('<li><i class="fa-solid fa-square-check icon-valid"></i> Độ dài đạt yêu cầu</li>');
-  }
-
-  // 2. Tiêu chí chữ hoa
-  if (/[A-Z]/.test(password)) {
-    score += 25;
-    suggestions.push('<li><i class="fa-solid fa-square-check icon-valid"></i> Có chứa chữ hoa</li>');
-  } else {
-    suggestions.push('<li><i class="fa-solid fa-square-xmark icon-invalid"></i> Cần thêm chữ hoa</li>');
-  }
-
-  // 3. Tiêu chí số
-  if (/[0-9]/.test(password)) {
-    score += 25;
-    suggestions.push('<li><i class="fa-solid fa-square-check icon-valid"></i> Có chứa số</li>');
-  } else {
-    suggestions.push('<li><i class="fa-solid fa-square-xmark icon-invalid"></i> Cần thêm số</li>');
-  }
-
-  // 4. Tiêu chí ký tự đặc biệt
-  if (/[^A-Za-z0-9]/.test(password)) {
-    score += 25;
-    suggestions.push('<li><i class="fa-solid fa-square-check icon-valid"></i> Có chứa ký tự đặc biệt</li>');
-  } else {
-    suggestions.push('<li><i class="fa-solid fa-square-xmark icon-invalid"></i> Cần thêm ký tự đặc biệt</li>');
-  }
-
-  if (score > 100) {
-    score = 100;
-  }
-
-  return { score, suggestions };
-}
-
-/**
- * Hàm giao diện Thanh đo, màu sắc, văn bản
- */
-function updateStrengthUI(analysis) {
-  // Cập nhật value của thanh <progress>
-  strengthMeter.value = analysis.score;
-
-  // Mặc định ban đầu màu đỏ (Yếu)
-  let background = "linear-gradient(90deg, #ff416c, #ff4b2b)";
-
-  if (analysis.score === 100) {
-    background = "linear-gradient(90deg, #27ae60, #2575fc)";
-  } else if (analysis.score >= 75) {
-    background = "linear-gradient(90deg, #a8e063, #56ab2f)";
-  } else if (analysis.score >= 50) {
-    background = "linear-gradient(90deg, #f39c12, #fdd835)";
-  }
-
-  strengthSuggestions.innerHTML = analysis.suggestions.join("");
-
-  // Set giá trị biến --progress-color
-  strengthMeter.style.setProperty("--progress-color", background);
-}
-
-// --- Các hàm cho "Sinh mật khẩu" ---
-
-// Hàm tô màu nền cho thanh slider
-function applyFill(slider) {
-  const percentage =
-    (100 * (slider.value - slider.min)) / (slider.max - slider.min);
-  const bg = `linear-gradient(90deg, ${sliderProps.fill} ${percentage}%, ${
-    sliderProps.background
-  } ${percentage + 0.1}%)`;
-  slider.style.background = bg;
-  sliderValue.setAttribute("data-length", slider.value);
-}
-
-// Hàm sinh mật khẩu chính
-function generatePassword(length, lower, upper, number, symbol) {
-  let generatedPassword = "";
-  const typesCount = lower + upper + number + symbol;
-  const typesArr = [{ lower }, { upper }, { number }, { symbol }].filter(
-    (item) => Object.values(item)[0]
-  );
-
-  if (typesCount === 0) {
-    return "";
-  }
-
-  for (let i = 0; i < length; i++) {
-    typesArr.forEach((type) => {
-      const funcName = Object.keys(type)[0];
-      generatedPassword += randomFunc[funcName]();
-    });
-  }
-
-  return generatedPassword.slice(0, length);
-}
-
-// Hàm vô hiệu hóa checkbox cuối cùng
-function disableOnlyCheckbox() {
-  let totalChecked = [uppercaseEl, lowercaseEl, numberEl, symbolEl].filter(
-    (el) => el.checked
-  );
-
-  totalChecked.forEach((el) => {
-    if (totalChecked.length == 1) {
-      el.disabled = true;
+    // 1. Độ dài
+    if (password.length < 8) {
+        suggestions.push('<li style="color:#ef4444"><i class="fa-solid fa-xmark"></i> Quá ngắn (tối thiểu 8 ký tự)</li>');
     } else {
-      el.disabled = false;
+        score += 20;
+        suggestions.push('<li style="color:#22c55e"><i class="fa-solid fa-check"></i> Độ dài tốt</li>');
     }
-  });
+    if (password.length >= 12) score += 20;
+
+    // 2. Chữ hoa
+    if (/[A-Z]/.test(password)) {
+        score += 15;
+        suggestions.push('<li style="color:#22c55e"><i class="fa-solid fa-check"></i> Có chữ hoa</li>');
+    } else {
+        suggestions.push('<li style="color:#94a3b8"><i class="fa-regular fa-circle"></i> Thiếu chữ hoa</li>');
+    }
+
+    // 3. Số
+    if (/[0-9]/.test(password)) {
+        score += 15;
+        suggestions.push('<li style="color:#22c55e"><i class="fa-solid fa-check"></i> Có số</li>');
+    } else {
+        suggestions.push('<li style="color:#94a3b8"><i class="fa-regular fa-circle"></i> Thiếu số</li>');
+    }
+
+    // 4. Ký tự đặc biệt
+    if (/[^A-Za-z0-9]/.test(password)) {
+        score += 30;
+        suggestions.push('<li style="color:#22c55e"><i class="fa-solid fa-check"></i> Có ký tự đặc biệt</li>');
+    } else {
+        suggestions.push('<li style="color:#94a3b8"><i class="fa-regular fa-circle"></i> Thiếu ký tự đặc biệt</li>');
+    }
+
+    return { score: Math.min(score, 100), suggestions };
 }
 
-// Hàm tạo số ngẫu nhiên "an toàn" hơn
+function updateStrengthUI(analysis) {
+    strengthMeter.value = analysis.score;
+    strengthSuggestions.innerHTML = analysis.suggestions.join("");
+
+    // Đổi màu thanh progress dựa trên điểm
+    let color = "#ef4444"; // Đỏ
+    if (analysis.score >= 50) color = "#eab308"; // Vàng
+    if (analysis.score >= 80) color = "#22c55e"; // Xanh lá
+
+    strengthMeter.style.setProperty("--progress-color", color);
+}
+
+// --- LOGIC SINH MẬT KHẨU ---
+function generatePassword(length, lower, upper, number, symbol) {
+    let generatedPassword = "";
+    const typesArr = [{ lower }, { upper }, { number }, { symbol }].filter(item => Object.values(item)[0]);
+
+    if (typesArr.length === 0) return "";
+
+    // Đảm bảo mỗi loại có ít nhất 1 ký tự
+    typesArr.forEach(type => {
+        const funcName = Object.keys(type)[0];
+        generatedPassword += randomFunc[funcName]();
+    });
+
+    // Điền phần còn lại
+    for (let i = generatedPassword.length; i < length; i++) {
+        const type = typesArr[Math.floor(Math.random() * typesArr.length)];
+        const funcName = Object.keys(type)[0];
+        generatedPassword += randomFunc[funcName]();
+    }
+
+    // Trộn ký tự (Shuffle)
+    return generatedPassword.split('').sort(() => 0.5 - Math.random()).join('');
+}
+
+function createAcronymFromSentence(sentence) {
+    const words = sentence.split(/\s+/);
+    let password = "";
+    words.forEach(word => {
+        if (word.length > 0) password += word[0];
+    });
+
+    // Nếu ngắn quá (<8), thêm số ngẫu nhiên vào cuối cho an toàn
+    if (password.length < 8) {
+        password += Math.floor(Math.random() * 1000);
+    }
+    return password;
+}
+
+// --- HÀM RANDOM AN TOÀN ---
 function secureMathRandom() {
-  return (
-    window.crypto.getRandomValues(new Uint32Array(1))[0] / (Math.pow(2, 32) - 1)
-  );
+    return window.crypto.getRandomValues(new Uint32Array(1))[0] / (Math.pow(2, 32) - 1);
 }
 
-// Các hàm tạo ký tự ngẫu nhiên
 function getRandomLower() {
-  return String.fromCharCode(Math.floor(Math.random() * 26) + 97);
+    return String.fromCharCode(Math.floor(secureMathRandom() * 26) + 97);
 }
 function getRandomUpper() {
-  return String.fromCharCode(Math.floor(Math.random() * 26) + 65);
+    return String.fromCharCode(Math.floor(secureMathRandom() * 26) + 65);
 }
 function getRandomNumber() {
-  return String.fromCharCode(Math.floor(secureMathRandom() * 10) + 48);
+    return String.fromCharCode(Math.floor(secureMathRandom() * 10) + 48);
 }
 function getRandomSymbol() {
-  const symbols = '~!@#$%^&*()_+{}":?><;.,';
-  return symbols[Math.floor(Math.random() * symbols.length)];
+    const symbols = '~!@#$%^&*()_+{}":?><;.,';
+    return symbols[Math.floor(secureMathRandom() * symbols.length)];
 }
 
-// --- Khởi chạy các hàm ban đầu ---
-
-// Tô màu slider lần đầu khi tải trang
-applyFill(slider.querySelector("input"));
+// Khởi chạy màu slider ban đầu
+applySliderFill(lengthEl);
